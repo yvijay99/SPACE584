@@ -385,7 +385,8 @@ function star_ls = identify_stars(st_im, FOV)
         star_ls(istar, 1) = mean(phi_positions(x_cluster)); % Average phi coordinate
         star_ls(istar, 2) = mean(theta_positions(y_cluster)); % Average theta coordinate
     end
-    
+end
+
     % Basic method
     % Find clusters of bright points in the star tracker image
     %star_ls = []; % Initialize output array for star positions
@@ -423,7 +424,6 @@ function star_ls = identify_stars(st_im, FOV)
     %    star_ls(i, 1) = phi_positions(x_coords(i)); % Phi position
     %    star_ls(i, 2) = theta_positions(y_coords(i)); % Theta position
     %end
-end
 
 function [star_num,deltaphi,deltatheta] = match_to_lookup(star_ls,star_pos_error,star_lookup)
     % Input
