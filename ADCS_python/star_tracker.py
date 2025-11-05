@@ -6,6 +6,14 @@ Created on Tue Nov  4 14:46:16 2025
 @author: atcushen
 
 Read in star_field.npy image, and reference data in star_table.npy and star_distances.npy, to determine the attitude of the star camera field of view
+
+Requires the directory where the file is running, so it knows where to look for the files to load
+e.g.
+For local *run in current directory):
+>> python3 star_tracker.py ./
+For rpi deployment:
+>> python3 /home/space584a/MATLAB_ws/R2025b/ADCS_python/star_tracker.py /home/space584a/MATLAB_ws/R2025b/ADCS_python/
+
 """
 
 import numpy as np
@@ -15,15 +23,36 @@ import time
 from skimage.measure import label, regionprops
 import matplotlib.pyplot as plt
 from scipy.io import savemat
+from datetime import datetime
 
 def main():
+    
+    # List files
+    '''
+    entries = os.listdir('.')
+
+    print(f"Contents of the current directory ({os.getcwd()}):")
+    for entry in entries:
+        full_path = os.path.join('.', entry)
+        if os.path.isdir(full_path):
+            print(f"📁 Directory: {entry}")
+        elif os.path.isfile(full_path):
+            print(f"📄 File:      {entry}")
+        else:
+            # Handles symlinks or other file types
+            print(f"❓ Other:     {entry}")
+    '''
+    
+    print('###### RUNING STAR TRACKER ANALYSIS ######')
+    
+    input_directory = sys.argv[1]
     
     start_time = time.perf_counter()
     
     # Load in data
-    st_im = np.load('star_field.npy')
-    star_table = np.load('star_table.npy')
-    star_distances = np.load('star_distances.npy')
+    st_im = np.load(str(input_directory+'star_field.npy'))
+    star_table = np.load(str(input_directory+'star_table.npy'))
+    star_distances = np.load(str(input_directory+'star_distances.npy'))
     
     # Print status
     end_time = time.perf_counter()
@@ -74,7 +103,7 @@ def main():
     ax.set_title("Star tracker analysis")
     
     if savePlot:
-        plt.savefig("star_tracker_analysis.jpg", dpi=200)
+        plt.savefig(str(input_directory+"star_tracker_analysis.jpg"), dpi=200)
         
     plt.close()
         
@@ -82,10 +111,10 @@ def main():
     # Save attitude for matlab to read
     phi_st = np.array([phi_st], dtype=np.float64) # Use float64 for standard MATLAB 'double' precision
 
-    data_dict = {"phi_st": phi_st}
+    data_dict = {"phi_st": phi_st,"t": time.time()} # Save Unix Epoch Time (seconds since 1970)
 
     output_file = "phi_st.mat"
-    savemat(output_file, data_dict)
+    savemat(str(input_directory+output_file), data_dict)
     
     print("Attitude is determined to be: phi_st =", round(phi_st.item(),5),", and is saved to:", output_file)
     
@@ -251,7 +280,7 @@ def match_to_lookup(star_ls, star_pos_error, star_lookup, ax):
         else:
             # Get the original row number of the matched star
             # np.where returns a tuple of arrays, the first element has the indices
-            star_num = np.where(match_indices)[0][0] + 1 # MATLAB is 1-based, so add 1
+            star_num = np.where(match_indices)[0][0] 
             deltaphi = star_ls[istar, 0] # Offset in phi
             deltatheta = star_ls[istar, 1] # Offset in theta
             star_match = True
