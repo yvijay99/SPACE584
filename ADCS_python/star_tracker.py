@@ -100,7 +100,7 @@ def main():
     ax.set_ylabel(r"$\delta \theta$ [rad]")
     
     ax.legend(loc='lower right')
-    ax.set_title("Star tracker analysis")
+    ax.set_title(str("Star tracker analysis, $\phi_{ss}$ = "+f"{phi_st:.4f}"))
     
     if savePlot:
         plt.savefig(str(input_directory+"star_tracker_analysis.jpg"), dpi=200)
@@ -119,7 +119,7 @@ def main():
     print("Attitude is determined to be: phi_st =", round(phi_st.item(),5),", and is saved to:", output_file)
     
     
-    return
+    return phi_st
     
 def identify_stars(st_im, FOV):
     """
