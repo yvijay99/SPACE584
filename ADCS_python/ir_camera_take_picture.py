@@ -1,3 +1,10 @@
+'''
+Take picture using adafruit thermal IR Camera
+Must be run in virtual environment:
+>> root = "/home/space584a/MATLAB_ws/R2025b/" 
+>> root+'ADCS_python/thermal_env/bin/python3 '+root+'ADCS_python/ir_camera_take_picture.py'
+'''
+
 import time
 import board
 import busio
@@ -7,6 +14,8 @@ from PIL import Image
 
 
 def main():
+    
+    print("######## TAKING IR PHOTO ############")
     
     i2c = busio.I2C(board.SCL, board.SDA)
     

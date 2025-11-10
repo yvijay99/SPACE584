@@ -43,7 +43,7 @@ def main():
             print(f"❓ Other:     {entry}")
     '''
     
-    print('###### RUNING STAR TRACKER ANALYSIS ######')
+    print('###### RUNNING STAR TRACKER ANALYSIS ######')
     
     input_directory = sys.argv[1]
     

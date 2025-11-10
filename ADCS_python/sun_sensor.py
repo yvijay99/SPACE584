@@ -21,6 +21,8 @@ from datetime import datetime
 
 def main():
     
+    print('###### RUNNING SUN SENSOR ANALYSIS ######')
+    
     # Load jpg from command argument
     
     start_time = time.perf_counter()
@@ -43,7 +45,7 @@ def main():
     start_time = time.perf_counter()
     
     # Set threshold; cells dimmer than this will be assumed to not be the sun
-    cutoff_brightness = 0.3 * ss_bit_depth
+    cutoff_brightness = 0.5 * ss_bit_depth
     img_array_filtered[img_array<cutoff_brightness] = 0
     
     # Get dimensions of the image
@@ -90,6 +92,10 @@ def main():
             print('ERROR: No sun found in frame')
             phi_ss = np.nan  # Return NaN if no adjacent entries are found
         
+        elif np.sum(col_brightness>0) > phi_res/2:
+            print('ERROR: Sun too close, taking up too much of the frame')
+            phi_ss = np.nan  # Return NaN if no adjacent entries are found
+        
         elif multiple_adjacents:
             print('ERROR: Multiple sun-like clusters found, cannot identify the sun')
             phi_ss = np.nan  # Return NaN if multiple adjacent entries are found
@@ -121,8 +127,8 @@ def main():
         axs[0].set_title("Raw IR image")
         axs[0].set_aspect(1)
         
-        axs[1].imshow(img_array_filtered,extent = [-ss_phi_FOV/2,ss_phi_FOV/2,-ss_theta_FOV/2,ss_theta_FOV/2], 
-                      origin = 'lower', vmin = 0, vmax = ss_bit_depth)
+        axs[1].imshow(img_array_filtered, extent = [-ss_phi_FOV/2,ss_phi_FOV/2,-ss_theta_FOV/2,ss_theta_FOV/2], 
+                      vmin = 0, vmax = ss_bit_depth)
         axs[1].axvline(x=(sun_phi-phi_ss), color='red')
         axs[1].set_xlabel(r"$\delta \phi$ [rad]")
         axs[1].set_ylabel(r"$\delta \theta$ [rad]")
@@ -133,7 +139,7 @@ def main():
         axs1_1.plot(np.linspace(-ss_phi_FOV/2,ss_phi_FOV/2, phi_res), col_brightness/(theta_res*ss_bit_depth), color='white')
         axs1_1.set_ylim(-1,2)      
     
-        axs[1].set_title("Sun sensor analysis")
+        axs[1].set_title(str(r"Sun sensor analysis, $\phi_{ss}$ = "+str(phi_ss)))
         
         if savePlot:
             plt.savefig(str(input_directory+"sun_sensor_analysis.jpg"), dpi=200)
