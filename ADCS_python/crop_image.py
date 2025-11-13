@@ -65,7 +65,7 @@ def main():
     
     # Save image as pkl and jpg (for testing)
     output_file = str(input_file[:-3]+"npy")
-    np.save(output_file,img_array_bw_crop)
+    np.save(output_file,img_array_bw_crop[::-1,:])
         
     # Print status
     end_time = time.perf_counter()
@@ -78,7 +78,7 @@ if __name__ == "__main__":
     # Define control parameters
     img_wFOV = np.deg2rad(102) # Total field of view of full image width [rad]
     img_hFOV = np.deg2rad(67) # Total field of view of full image width [rad]
-    img_h_adjust = np.deg2rad(-7) # adjust the vertical frame of the image [rad] 
+    img_h_adjust = np.deg2rad(0) # adjust the vertical frame of the image [rad] 
     FOV = np.pi/6 # Cropped image field of view [rad]
     
     if FOV>img_hFOV:

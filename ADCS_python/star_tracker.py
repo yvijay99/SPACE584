@@ -200,6 +200,7 @@ def match_to_lookup(star_ls, star_pos_error, star_lookup, ax):
     # get a positive match
     star_match = False
     
+
     # Calculate the sum of squares for each star position
     star_ls_dist = np.sum(star_ls**2, axis=1)
     
@@ -302,7 +303,7 @@ if __name__ == "__main__":
     FOV = np.pi/6
     img_wFOV = np.deg2rad(102) # Total field of view width of starfield reference image [rad]
     nwpx = 4608 # How many pixels wide the full starfield reference image is
-    star_pos_error = 10*img_wFOV/nwpx;
+    star_pos_error = 20*img_wFOV/nwpx;
     
     savePlot = True
     

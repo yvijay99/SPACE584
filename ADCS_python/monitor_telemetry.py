@@ -194,7 +194,7 @@ if __name__ == "__main__":
     wait_time = 1 #[s]
     
     # For scp-ing files from the rpi
-    HOST = "192.168.0.102"
+    HOST = "192.168.0.141"
     USER = "space584a"
     PASS = "raspberry"
     ROOT = "/home/"+USER+"/MATLAB_ws/R2025b/"

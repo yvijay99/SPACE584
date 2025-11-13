@@ -1,10 +1,3 @@
-'''
-Take picture using adafruit thermal IR Camera
-Must be run in virtual environment:
->> root = "/home/space584a/MATLAB_ws/R2025b/" 
->> root+'ADCS_python/thermal_env/bin/python3 '+root+'ADCS_python/ir_camera_take_picture.py'
-'''
-
 import time
 import board
 import busio
@@ -35,7 +28,9 @@ def main():
     normalized = (data_array - np.min(data_array)) / (np.max(data_array) - np.min(data_array))
     image_8 = np.uint8(normalized * 255)
     image = Image.fromarray(image_8)
+    image = image.transpose(Image.FLIP_TOP_BOTTOM)
     
+
     image.save("/home/space584a/MATLAB_ws/R2025b/ADCS_python/ir_picture.jpg")
 
 if __name__ == "__main__":
