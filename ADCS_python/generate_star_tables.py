@@ -30,10 +30,10 @@ def main():
     pixel_table = np.loadtxt(input_file, delimiter=',', skiprows=1)
     
     # Index the first column of the pixel_table to get the phi positions
-    phi_positions = (pixel_table[:, 0]-x0) * np.pi/180 * img_wFOV/nwpx;
+    phi_positions = (pixel_table[:, 0]-x0) * img_wFOV/nwpx;
     
     # Index the second column of the pixel_table to get the theta positions
-    theta_positions = (pixel_table[:, 1]-y0) * np.pi/180 * img_hFOV/nhpx;
+    theta_positions = (pixel_table[:, 1]-y0) *img_hFOV/nhpx;
 
     # Combine the phi, theta, and brightness into the star_table
     star_table = np.array([phi_positions, theta_positions]).T
@@ -89,8 +89,8 @@ if __name__ == "__main__":
     img_hFOV = np.deg2rad(67) # Total field of view height of starfield reference image [rad]
     nwpx = 4608 # How many pixels wide the full starfield reference image is
     nhpx = 2592 # How many pixels wide the full starfield reference image is
-    x0 = 3270 # phi-pixel coord of reference to use at theta=0
-    y0 = 1608 # theta-pixel coord of rerence to use at theta = 0
+    x0 = 3303 # phi-pixel coord of reference to use at theta=0
+    y0 = 1546 # theta-pixel coord of rerence to use at theta = 0
     nangle = 10 # How many distances to neighbouring stars to compute per star
     
     # Run script

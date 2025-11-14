@@ -213,6 +213,7 @@ def match_to_lookup(star_ls, star_pos_error, star_lookup, ax):
     fail_label = 'Failed Matches'
     
     while not star_match and istar < len(star_ls):
+        
         # Compute distances to other stars
         phi_diff = star_ls[istar, 0] - star_ls[:, 0]
         theta_diff = star_ls[istar, 1] - star_ls[:, 1]
@@ -225,21 +226,27 @@ def match_to_lookup(star_ls, star_pos_error, star_lookup, ax):
         # Drop the first element of sorted_angles (distance to itself = 0)
         sorted_angles = sorted_angles[1:]
 
+        print("Attempting to match istar",istar,"which has distances to neighbours:",sorted_angles[:5],"...")
+
         # Reduce sorted angles to only be as long as star_lookup is wide
-        num_lookup_angles = star_lookup.shape[1]
-        sorted_angles = sorted_angles[:min(len(sorted_angles), num_lookup_angles)]
+        #num_lookup_angles = star_lookup.shape[1]
+        #sorted_angles = sorted_angles[:min(len(sorted_angles), num_lookup_angles)]
 
         # Create an array of stars within the positional error range
         # Note: star_lookup[:, 0] is the first column of the lookup table
-        match_indices = (star_lookup[:, 0] >= (sorted_angles[0] - star_pos_error)) & \
-                        (star_lookup[:, 0] <= (sorted_angles[0] + star_pos_error))
+        match_indices = (star_lookup[:, 0] >= (sorted_angles[0] - star_pos_error)) & (star_lookup[:, 0] <= (sorted_angles[0] + star_pos_error))
         
         matched_stars = star_lookup[match_indices, :]
+        
+        print("Stars in catalog with similar distances:")
+        
+        for matched_star in np.where(match_indices)[0]:
+            print('Star #',matched_star,"with distances:", star_lookup[matched_star,:5],"...")
 
         # Check if that immediately identified the current state. 
         # If not, compare the angular distances one by one, bringing in more to
         # reduce the number of remaining options
-        iangle = 1 # Python uses 0-based indexing, so iangle=1 corresponds to the 2nd angle
+        iangle = 0 # Python uses 0-based indexing, so iangle=1 corresponds to the 2nd angle
 
         while matched_stars.shape[0] > 1 and iangle < star_lookup.shape[1]:
             print('Found multiple matches, refining to next angle')
@@ -303,7 +310,7 @@ if __name__ == "__main__":
     FOV = np.pi/6
     img_wFOV = np.deg2rad(102) # Total field of view width of starfield reference image [rad]
     nwpx = 4608 # How many pixels wide the full starfield reference image is
-    star_pos_error = 20*img_wFOV/nwpx;
+    star_pos_error = 2*img_wFOV/nwpx;
     
     savePlot = True
     

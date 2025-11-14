@@ -30,6 +30,7 @@ def main():
     image = Image.fromarray(image_8)
     image = image.transpose(Image.FLIP_TOP_BOTTOM)
     
+    np.save("/home/space584a/MATLAB_ws/R2025b/ADCS_python/ir_data_array.npy", data_array)
 
     image.save("/home/space584a/MATLAB_ws/R2025b/ADCS_python/ir_picture.jpg")
 
