@@ -33,7 +33,7 @@ def main():
     phi_positions = (pixel_table[:, 0]-x0) * img_wFOV/nwpx;
     
     # Index the second column of the pixel_table to get the theta positions
-    theta_positions = (pixel_table[:, 1]-y0) *img_hFOV/nhpx;
+    theta_positions = (pixel_table[:, 1]-y0) * img_hFOV/nhpx;
 
     # Combine the phi, theta, and brightness into the star_table
     star_table = np.array([phi_positions, theta_positions]).T

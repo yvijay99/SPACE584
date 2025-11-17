@@ -29,15 +29,19 @@ def main():
     
     input_directory = sys.argv[1]
     
-    img = Image.open(str(input_directory+'ir_picture.jpg'))
+    #img = Image.open(str(input_directory+'ir_picture.jpg'))
                      
-    img_array = np.asarray(img)
+    #img_array = np.asarray(img)
+    
+    img_array = np.load(str(input_directory+'ir_data_array.npy'))
+    
     img_array_filtered = np.copy(img_array)
     
     # Print status
     end_time = time.perf_counter()
     elapsed_time = end_time - start_time
-    print(f"Loaded",str(input_directory+'ir_picture.jpg'),f"in : {elapsed_time:.4f} seconds")
+    #print(f"Loaded",str(input_directory+'ir_picture.jpg'),f"in : {elapsed_time:.4f} seconds")
+    print(f"Loaded",str(input_directory+'ir_data_array.npy'),f"in : {elapsed_time:.4f} seconds")
     
     
     # Process the image
@@ -45,7 +49,7 @@ def main():
     start_time = time.perf_counter()
     
     # Set threshold; cells dimmer than this will be assumed to not be the sun
-    cutoff_brightness = 0.5 * ss_bit_depth
+    cutoff_brightness = 0.90 * sun_brightness
     img_array_filtered[img_array<cutoff_brightness] = 0
     
     # Get dimensions of the image
@@ -123,12 +127,12 @@ def main():
         
         axs1_1 = axs[1].twinx()
         
-        axs[0].imshow(img_array, vmin = 0, vmax = ss_bit_depth, cmap='Greys_r')
+        axs[0].imshow(img_array, origin='lower', vmin = sun_brightness*0.8, vmax = sun_brightness*1.1, cmap='Greys_r')
         axs[0].set_title("Raw IR image")
         axs[0].set_aspect(1)
         
-        axs[1].imshow(img_array_filtered, extent = [-ss_phi_FOV/2,ss_phi_FOV/2,-ss_theta_FOV/2,ss_theta_FOV/2], 
-                      vmin = 0, vmax = ss_bit_depth)
+        axs[1].imshow(img_array_filtered, origin='lower', extent = [-ss_phi_FOV/2,ss_phi_FOV/2,-ss_theta_FOV/2,ss_theta_FOV/2], 
+                      vmin = 0, vmax = sun_brightness)
         axs[1].axvline(x=(sun_phi-phi_ss), color='red')
         axs[1].set_xlabel(r"$\delta \phi$ [rad]")
         axs[1].set_ylabel(r"$\delta \theta$ [rad]")
@@ -136,10 +140,10 @@ def main():
         axs[1].set_aspect(1)
         axs[1].set_ylim(-ss_theta_FOV/2,ss_theta_FOV/2)
         
-        axs1_1.plot(np.linspace(-ss_phi_FOV/2,ss_phi_FOV/2, phi_res), col_brightness/(theta_res*ss_bit_depth), color='white')
+        axs1_1.plot(np.linspace(-ss_phi_FOV/2,ss_phi_FOV/2, phi_res), col_brightness/(theta_res*sun_brightness), color='white')
         axs1_1.set_ylim(-1,2)      
     
-        axs[1].set_title(str(r"Sun sensor analysis, $\phi_{ss}$ = "+str(phi_ss)))
+        axs[1].set_title(str(r"Sun sensor analysis, $\phi_{ss}$ = "+str(round(phi_ss,4))))
         
         if savePlot:
             plt.savefig(str(input_directory+"sun_sensor_analysis.jpg"), dpi=200)
@@ -160,7 +164,8 @@ def main():
 
 if __name__ == "__main__":
     
-    ss_bit_depth = 255
+    ss_bit_depth = 255 # No longer used, as we stopped using normalized images
+    sun_brightness = 28 # Pixel brightness of sun.
     sun_phi = 0
     ss_phi_FOV = np.deg2rad(55) 
     ss_theta_FOV = np.deg2rad(35) 
