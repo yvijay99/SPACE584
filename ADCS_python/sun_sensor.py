@@ -10,6 +10,7 @@ The sun is assumed to be at phi=0
 
 """
 
+import struct
 from PIL import Image
 import numpy as np
 import sys
@@ -150,17 +151,21 @@ def main():
             
         plt.close()
         
-        # Save attitude for matlab to read
-        phi_st = np.array([phi_ss], dtype=np.float64) # Use float64 for standard MATLAB 'double' precision
+    # Save attitude for matlab to read
+    phi_ss = np.array([phi_ss], dtype=np.float64)
 
-        data_dict = {"phi_ss": phi_ss,"t": time.time()} # Save Unix Epoch Time (seconds since 1970)
+    data_dict = {"phi_ss": phi_ss,"t": time.time()}
 
-        output_file = "phi_ss.mat"
-        savemat(str(input_directory+output_file), data_dict)
-        
-        print("Attitude is determined to be: phi_st =", round(phi_st.item(),5),", and is saved to:", output_file)
-        
-        return phi_ss
+    output_file_ss = "phi_ss.bin"
+    
+    t_ss = data_dict["t"]
+    with open(input_directory + output_file_ss, "wb") as f:
+        f.write(struct.pack("dd", phi_ss.item(), t_ss))
+
+    #output_file = "phi_ss.mat"
+    #savemat(str(input_directory+output_file), data_dict)
+    
+    print("Attitude is determined to be: phi_ss =", round(phi_ss.item(),5),", and is saved to:", output_file_ss)
 
 if __name__ == "__main__":
     

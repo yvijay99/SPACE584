@@ -24,6 +24,7 @@ from skimage.measure import label, regionprops
 import matplotlib.pyplot as plt
 from scipy.io import savemat
 from datetime import datetime
+import struct
 
 def main():
     
@@ -35,12 +36,12 @@ def main():
     for entry in entries:
         full_path = os.path.join('.', entry)
         if os.path.isdir(full_path):
-            print(f"📁 Directory: {entry}")
+            print(f"Directory: {entry}")
         elif os.path.isfile(full_path):
-            print(f"📄 File:      {entry}")
+            print(f"File:      {entry}")
         else:
             # Handles symlinks or other file types
-            print(f"❓ Other:     {entry}")
+            print(f"Other:     {entry}")
     '''
     
     print('###### RUNNING STAR TRACKER ANALYSIS ######')
@@ -109,14 +110,20 @@ def main():
         
     
     # Save attitude for matlab to read
-    phi_st = np.array([phi_st], dtype=np.float64) # Use float64 for standard MATLAB 'double' precision
+    phi_st = np.array([phi_st], dtype=np.float64)
 
-    data_dict = {"phi_st": phi_st,"t": time.time()} # Save Unix Epoch Time (seconds since 1970)
+    data_dict = {"phi_st": phi_st,"t": time.time()}
 
-    output_file = "phi_st.mat"
-    savemat(str(input_directory+output_file), data_dict)
+    output_file_st = "phi_st.bin"
     
-    print("Attitude is determined to be: phi_st =", round(phi_st.item(),5),", and is saved to:", output_file)
+    t_st = data_dict["t"]
+    with open(input_directory + output_file_st, "wb") as f:
+        f.write(struct.pack("dd", phi_st.item(), t_st))
+
+    #output_file = "phi_st.mat"
+    #savemat(str(input_directory+output_file), data_dict)
+    
+    print("Attitude is determined to be: phi_st =", round(phi_st.item(),5),", and is saved to:", output_file_st)
     
     
     return phi_st
