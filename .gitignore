@@ -38,3 +38,7 @@ codegen/
 # SimBiology backup files
 *.sbproj.backup
 *.sbproj.bak
+
+# Other stuff
+__pycache__/
+ADCS_python/sun_sensor_analysis.jpg
