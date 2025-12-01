@@ -14,7 +14,7 @@ GPIO assignments:
     - MT2:     GPIO 27 (pin 13)
 """
 
-import RPi.GPIO as GPIO
+#import RPi.GPIO as GPIO
 import socket
 import struct
 import time
@@ -22,10 +22,10 @@ import time
 # ---------------------
 # CONFIGURATION
 # ---------------------
-UDP_IP = "192.168.0.117"
-UDP_PORT = 5006
+#UDP_IP = "192.168.0.117"
+UDP_IP = "127.0.0.1"
+UDP_PORT = 5007
 PACKET_SIZE = 10
-
 # GPIO pins
 RW_PIN = 18
 MT1_PIN = 17
@@ -49,7 +49,7 @@ pwm = GPIO.PWM(RW_PIN, PWM_FREQ)
 pwm.start(0)
 
 # Initialize magnetorquers OFF
-GPIO.output(MT1_PIN, GPIO.LOW)
+#GPIO.output(MT1_PIN, GPIO.LOW)
 GPIO.output(MT2_PIN, GPIO.LOW)
 
 def set_throttle(pct):
