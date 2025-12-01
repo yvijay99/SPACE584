@@ -92,18 +92,31 @@ def main():
             if multiple_adjacents:
                 break
         
-        # Display errors
-        if not adjacent_found:
-            print('ERROR: No sun found in frame')
-            phi_ss = np.nan  # Return NaN if no adjacent entries are found
-        
-        elif np.sum(col_brightness>0) > phi_res/2:
+        # Display errors      
+        if np.sum(col_brightness>0) > phi_res/2:
             print('ERROR: Sun too close, taking up too much of the frame')
             phi_ss = np.nan  # Return NaN if no adjacent entries are found
         
         elif multiple_adjacents:
             print('ERROR: Multiple sun-like clusters found, cannot identify the sun')
             phi_ss = np.nan  # Return NaN if multiple adjacent entries are found
+
+        elif not adjacent_found:
+            # print('ERROR: No sun found in frame')
+            # phi_ss = np.nan  # Return NaN if no adjacent entries are found
+            print('WARNING: No adjacent found, using 1 pixel sun')
+
+            # Iterate over the indices of col_brightness that are greater than zero
+            sun_indices = np.where(col_brightness > 0)[0]
+            # Get the brightness-weighted pixel location of the sun
+            weighted_sum = np.sum(col_brightness[sun_indices] * sun_indices)
+            brightness_sum = np.sum(col_brightness[sun_indices])
+
+            sun_pixel_loc = weighted_sum / brightness_sum
+        
+            # Determine phi_ss from this relative position
+            phi_ss = sun_phi - ((sun_pixel_loc / phi_res) * ss_phi_FOV - ss_phi_FOV / 2)
+            
         else:
             # Iterate over the indices of col_brightness that are greater than zero
             sun_indices = np.where(col_brightness > 0)[0]
@@ -151,27 +164,27 @@ def main():
             
         plt.close()
         
-    # Save attitude for matlab to read
-    phi_ss = np.array([phi_ss], dtype=np.float64)
-
-    data_dict = {"phi_ss": phi_ss,"t": time.time()}
-
-    output_file_ss = "phi_ss.bin"
-    
-    t_ss = data_dict["t"]
-    with open(input_directory + output_file_ss, "wb") as f:
-        f.write(struct.pack("dd", phi_ss.item(), t_ss))
-
-    #output_file = "phi_ss.mat"
-    #savemat(str(input_directory+output_file), data_dict)
-    
-    print("Attitude is determined to be: phi_ss =", round(phi_ss.item(),5),", and is saved to:", output_file_ss)
+        # Save attitude for matlab to read
+        phi_ss = np.array([phi_ss], dtype=np.float64)
+     
+        data_dict = {"phi_ss": phi_ss,"t": time.time()}
+     
+        output_file_ss = "phi_ss.bin"
+        
+        t_ss = data_dict["t"]
+        with open(input_directory + output_file_ss, "wb") as f:
+            f.write(struct.pack("dd", phi_ss.item(), t_ss))
+     
+        #output_file = "phi_ss.mat"
+        #savemat(str(input_directory+output_file), data_dict)
+        
+        print("Attitude is determined to be: phi_ss =", round(phi_ss.item(),5),", and is saved to:", output_file_ss)
 
 if __name__ == "__main__":
     
     ss_bit_depth = 255 # No longer used, as we stopped using normalized images
-    sun_brightness = 28 # Pixel brightness of sun.
-    sun_phi = 0
+    sun_brightness = 30 # Pixel brightness of sun.
+    sun_phi = -0.32
     ss_phi_FOV = np.deg2rad(55) 
     ss_theta_FOV = np.deg2rad(35) 
     
