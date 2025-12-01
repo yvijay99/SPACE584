@@ -15,6 +15,7 @@ For rpi deployment:
 >> python3 /home/space584a/MATLAB_ws/R2025b/ADCS_python/star_tracker.py /home/space584a/MATLAB_ws/R2025b/ADCS_python/
 
 This version: adds headless matplotlib backend (Agg) and robust exception handling so the calling loop doesn't crash.
+
 """
 
 import numpy as np
@@ -25,7 +26,6 @@ from skimage.measure import label, regionprops
 import matplotlib
 matplotlib.use('Agg')
 import matplotlib.pyplot as plt
-
 from scipy.io import savemat
 from datetime import datetime
 import struct
@@ -33,7 +33,23 @@ import traceback
 
 def main():
     
-    print('###### RUNNING STAR TRACKER ANALYSIS ######')
+    # List files
+    '''
+    entries = os.listdir('.')
+
+    print(f"Contents of the current directory ({os.getcwd()}):")
+    for entry in entries:
+        full_path = os.path.join('.', entry)
+        if os.path.isdir(full_path):
+            print(f"📁 Directory: {entry}")
+        elif os.path.isfile(full_path):
+            print(f"📄 File:      {entry}")
+        else:
+            # Handles symlinks or other file types
+            print(f"❓ Other:     {entry}")
+    '''
+    
+    print('################## RUNNING STAR TRACKER ANALYSIS ##################')
     
     if len(sys.argv) < 2:
         write_phi_nan("./")
@@ -54,6 +70,7 @@ def main():
     print(f"Loaded the star_field image, star_table, and star_distances in : {elapsed_time:.4f} seconds")
     
     
+    
     start_time = time.perf_counter()
     
     # Find stars
@@ -64,23 +81,39 @@ def main():
     print(f"Found {len(star_ls):.0f} stars in: {elapsed_time:.4f} seconds")
     
     
+    
     start_time = time.perf_counter()
     
     # Begin plotting
     fig,ax = plt.subplots(figsize=(10,10))
     
-    ax.imshow(st_im, origin='lower', cmap='Greys_r', extent = [phi_positions[0],phi_positions[-1],theta_positions[0],theta_positions[-1]])
+    ax.imshow(st_im, origin='lower', cmap='Greys_r',extent = [phi_positions[0],phi_positions[-1],theta_positions[0],theta_positions[-1]])
     ax.scatter(star_ls[:,0],star_ls[:,1], s = 50, linewidths=0.5, marker='o', facecolors='none', edgecolors='yellow',label = 'identified stars')
     for istar,star in enumerate(star_ls):
         ax.text(star[0],star[1]+0.005,istar,color='white',fontsize=8)
     
     # Match to table
-    star_num, deltaphi, deltatheta, ax = match_to_lookup(star_ls, star_pos_error, star_distances, ax)
+    star_num, istar_match, deltaphi, deltatheta, ax = signed_match_to_lookup(star_ls, star_pos_error, star_distances, ax)
     
     end_time = time.perf_counter()
     elapsed_time = end_time - start_time
     print(f"Identified star num. {star_num:.0f} to be offset by {deltaphi:.3f},{deltatheta:.3f} from camera boresight in: {elapsed_time:.4f} seconds")
     
+    #istar_match=0 #Override for debug
+    # Show distances to matched_star
+    if star_num != -1:
+        for istar in range(len(star_ls)):
+            if istar!=istar_match:
+                ax.plot([star_ls[istar_match,0],star_ls[istar,0]], [star_ls[istar_match,1],star_ls[istar,1]], color='darkgoldenrod')
+                # Compute distances to other stars
+                phi_diff = star_ls[istar, 0] - star_ls[istar_match, 0]
+                theta_diff = star_ls[istar, 1] - star_ls[istar_match, 1]
+                angle_diff = np.sqrt(phi_diff**2 + theta_diff**2)
+                if theta_diff>0:
+                    angle_diff = angle_diff*(-1)
+                ax.text(np.mean([star_ls[istar_match,0],star_ls[istar,0]]),np.mean([star_ls[istar_match,1],star_ls[istar,1]]), f"{angle_diff:.3f}", color='white',fontsize=6)
+        
+
     
     # Determine phi_st
     phi_st = star_table[star_num,0] - deltaphi;
@@ -100,13 +133,14 @@ def main():
         
     
     # Save attitude for matlab to read
-    phi_st = np.array([phi_st], dtype=np.float64)
+    phi_st = np.array([phi_st], dtype=np.float64) # Use float64 for standard MATLAB 'double' precision
 
-    data_dict = {"phi_st": phi_st,"t": time.time()}
+    data_dict = {"phi_st": phi_st,"t": time.time()} # Save Unix Epoch Time (seconds since 1970)
 
     output_file_st = "phi_st.bin"
     
     t_st = data_dict["t"]
+    
     with open(input_directory + output_file_st, "wb") as f:
         f.write(struct.pack("dd", phi_st.item(), t_st))
 
@@ -139,7 +173,7 @@ def identify_stars(st_im, FOV):
     
     # Identify bright points in the star tracker image
     # Note: Using 0.4 * 255 assumes your input image is uint8 (0-255 range).
-    threshold_value = 0.2 * 255 
+    threshold_value = 0.10 * 255 
     
     # Create filtered image (boolean mask)
     filtered_im = st_im > threshold_value
@@ -171,7 +205,188 @@ def identify_stars(st_im, FOV):
         star_ls[istar, 0] = phi_coord   # Average phi coordinate (x-axis)
         star_ls[istar, 1] = theta_coord # Average theta coordinate (y-axis)
         
-    return star_ls, phi_positions, theta_positions 
+    # Sort star_ls from center out
+    sorted_indices = np.argsort(np.sum(star_ls**2,axis=1))
+
+    star_ls_sorted = star_ls[sorted_indices]
+    
+    return star_ls_sorted, phi_positions, theta_positions 
+
+def signed_match_to_lookup(star_ls, star_pos_error, star_lookup, ax):
+    """
+    Update: This routine checks the relative position of the stars in theta to make sure they are the right match.
+    Input
+    star_ls: nx2 array, the phi and theta positions (relative to the
+    center of the image) for each star identified
+    star_pos_error: float, angular uncertainty in position of stars
+    star_lookup: nx_angle array, each row corresponds to given row in
+    star_table, columns are angular distances to closest stars
+
+    Output
+    star_num: integer, index number of matched star
+    deltaphi: float, offset in phi of matched star from image center, in
+    radians
+    deltatheta: float, offset in phi of matched star from image center,
+    in radians
+    """
+
+    # Iterate through stars in image, starting closest to middle, until we
+    # get a positive match
+    star_match = False
+    
+    # Calculate the sum of squares for each star position
+    star_ls_dist = np.sum(star_ls**2, axis=1)
+    
+    # Sort the star_ls based on the sum of squares
+    sorted_indices = np.argsort(star_ls_dist)
+    star_ls = star_ls[sorted_indices, :]
+
+    istar = 0
+    
+    fail_label = 'Failed Matches'
+    
+    while not star_match and istar < len(star_ls):
+        
+        # Compute distances to other stars
+        phi_diff = star_ls[:, 0] - star_ls[istar, 0]
+        theta_diff = star_ls[:, 1] - star_ls[istar, 1]
+        angle_diff = np.sqrt(phi_diff**2 + theta_diff**2)
+        
+        # Assign the sign to each star
+        for i in range(len(theta_diff)):
+            if theta_diff[i] > 0:
+                angle_diff[i] = angle_diff[i] * (-1)
+
+        # Sort the computed angular distances from smallest to largest
+        sorted_indices_angle = np.argsort(np.abs(angle_diff))
+        sorted_angles = angle_diff[sorted_indices_angle]
+        
+        # Drop the first element of sorted_angles (distance to itself = 0)
+        sorted_angles = sorted_angles[1:]
+        
+
+        print("Attempting to match istar",istar,"which has distances to neighbours:",sorted_angles[:7],"...")
+
+        #print(star_lookup[33,:])
+
+        # Create an array of stars within the positional error range
+        match_indices = (np.abs(star_lookup[:, 0]) >= (np.abs(sorted_angles[0]) - star_pos_error)) & (np.abs(star_lookup[:, 0]) <= (np.abs(sorted_angles[0]) + star_pos_error)) & (np.sign(star_lookup[:, 0]) == np.sign(sorted_angles[0]))
+        
+        print("Check range:")
+        matched_stars = star_lookup[match_indices, :]
+        
+        print("Stars in catalog with similar distances:")
+        
+        for matched_star in np.where(match_indices)[0]:
+            print('Star #',matched_star,"with distances:", star_lookup[matched_star,:7],"...")
+
+        # Check if that immediately identified the current state. 
+
+        iangle = 0 # Python uses 0-based indexing, so iangle=1 corresponds to the 2nd angle
+
+        while matched_stars.shape[0] > 1 and iangle < len(sorted_angles):
+            print('Found multiple matches, refining to next angle')
+            
+            # We loop through the remaining matches
+            match_indices_list = match_indices.tolist()
+            
+            for j in range(len(match_indices_list)):
+                if match_indices_list[j]: # Check only currently matched stars
+                    # Check to see if the next closest star is within error of
+                    # any of the neighbouring stars listed in the lookup table
+                    # If none of the angles are close enough, then reject this
+                    # match
+
+                    lookup_angles_remaining = star_lookup[j, iangle:]
+                    
+                    current_sorted_angle = sorted_angles[iangle]
+                    
+                    # Check if ANY angle in the lookup range is close enough to the sorted angle
+                    if not np.any((np.abs(np.abs(lookup_angles_remaining) - np.abs(current_sorted_angle)) <= star_pos_error) & (np.sign(lookup_angles_remaining) == np.sign(current_sorted_angle))):
+                        
+                        match_indices_list[j] = False # Reject this match
+            
+            match_indices = np.array(match_indices_list)
+            matched_stars = star_lookup[match_indices, :]
+        
+            iangle += 1
+            
+            print('Remaining stars:')
+            for matched_star in np.where(match_indices)[0]:
+                print('Star #',matched_star,"with distances:", star_lookup[matched_star,:5],"...")
+        
+        # Check if we could use this star 
+        if matched_stars.shape[0] != 1:
+            print(f'Could not find lookup table match for istar {istar:.0f}, moving to the next one')
+            ax.scatter(star_ls[istar,0],star_ls[istar,1], s = 50, linewidths=0.6, marker='o', facecolors='none', edgecolors='red',label = fail_label)
+            istar += 1 # Move to the next star
+            fail_label=''
+            
+        # Contingency: if the first distance matches only one star, check some other distances
+        #elif matched_stars.shape[0] == 1 and iangle == 0:
+        else:
+            
+            print("Down to one match: checking to see if enough angles match...")
+            # Look for at least 3 distance matches
+            match_count = 0 
+            
+            jangle_match = np.zeros(len(sorted_angles), dtype='bool')
+            kangle_match = np.zeros(len(star_lookup[matched_star,:]), dtype='bool')
+            
+            for jangle in range(1,len(sorted_angles)):
+
+                for kangle in range(len(star_lookup[matched_star,:])):
+                        
+                        # See if the stars align
+                        if (np.abs(np.abs(sorted_angles[jangle]) - np.abs(star_lookup[matched_star,kangle])) < star_pos_error) & (np.sign(sorted_angles[jangle]) == np.sign(star_lookup[matched_star,kangle])) :
+                               
+                            # Make sure we don't double count
+                            if ~jangle_match[jangle] and ~kangle_match[kangle]:
+                                
+                                print("istar angle",jangle,"=",sorted_angles[jangle],"matches distance",kangle,"=",star_lookup[matched_star,kangle])
+                                match_count+=1
+                                
+                                jangle_match[jangle] = True
+                                kangle_match[kangle] = True
+
+                    
+            if match_count<5:
+                
+                print("Could not find enough matching angles to avoid false positive, moving to next star...")
+                ax.scatter(star_ls[istar,0],star_ls[istar,1], s = 50, linewidths=0.6, marker='o', facecolors='none', edgecolors='orangered',label = fail_label)
+                istar +=1
+                fail_label=''
+                
+            else:
+                print("This star matched at",match_count,"other distances, so pass!")
+                star_num = np.where(match_indices)[0][0] 
+                deltaphi = star_ls[istar, 0] # Offset in phi
+                deltatheta = star_ls[istar, 1] # Offset in theta
+                star_match = True
+                ax.scatter(star_ls[istar,0],star_ls[istar,1], s = 60, linewidths=1, marker='o', facecolors='none', edgecolors='green',label = 'successful match')
+                ax.scatter(star_ls[istar,0],star_ls[istar,1], s = 200, linewidths=2, marker='o', facecolors='none', edgecolors='green')
+                print(f'Matched with istar {istar} as star #{star_num}, and it is offset {deltaphi:.4f} radians in phi and {deltatheta:.4f} radians in theta from boresight')
+        
+        '''
+        else:
+            # Get the original row number of the matched star
+            # np.where returns a tuple of arrays, the first element has the indices
+            star_num = np.where(match_indices)[0][0] 
+            deltaphi = star_ls[istar, 0] # Offset in phi
+            deltatheta = star_ls[istar, 1] # Offset in theta
+            star_match = True
+            ax.scatter(star_ls[istar,0],star_ls[istar,1], s = 60, linewidths=1, marker='o', facecolors='none', edgecolors='green',label = 'successful match')
+            ax.scatter(star_ls[istar,0],star_ls[istar,1], s = 200, linewidths=2, marker='o', facecolors='none', edgecolors='green')
+            print(f'Matched with istar {istar} as star #{star_num}, and it is offset {deltaphi:.4f} radians in phi and {deltatheta:.4f} radians in theta from boresight')
+        '''
+    # Return error if star tracker failed 
+    if not star_match:
+        print('Star tracker failed, unable to get a lock on any star.')
+        star_num = -1
+        deltaphi = np.nan
+        deltatheta = np.nan
+    
+    return star_num, istar, deltaphi, deltatheta, ax
 
 def match_to_lookup(star_ls, star_pos_error, star_lookup, ax):
     """
@@ -222,12 +437,8 @@ def match_to_lookup(star_ls, star_pos_error, star_lookup, ax):
 
         print("Attempting to match istar",istar,"which has distances to neighbours:",sorted_angles[:5],"...")
 
-        # Reduce sorted angles to only be as long as star_lookup is wide
-        #num_lookup_angles = star_lookup.shape[1]
-        #sorted_angles = sorted_angles[:min(len(sorted_angles), num_lookup_angles)]
 
         # Create an array of stars within the positional error range
-        # Note: star_lookup[:, 0] is the first column of the lookup table
         match_indices = (star_lookup[:, 0] >= (sorted_angles[0] - star_pos_error)) & (star_lookup[:, 0] <= (sorted_angles[0] + star_pos_error))
         
         matched_stars = star_lookup[match_indices, :]
@@ -311,12 +522,15 @@ def write_phi_nan(input_directory):
 if __name__ == "__main__":
     
     # Parameters
+    
     FOV = np.pi/6
     img_wFOV = np.deg2rad(102) # Total field of view width of starfield reference image [rad]
     nwpx = 4608 # How many pixels wide the full starfield reference image is
-    star_pos_error = 2*img_wFOV/nwpx;
+    star_pos_error = 0.004#6*img_wFOV/nwpx;
     
     savePlot = True
+    
+    main()
     
     try:
         phi = main()
