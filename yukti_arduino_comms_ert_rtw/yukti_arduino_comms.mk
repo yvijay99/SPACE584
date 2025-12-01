@@ -2,7 +2,7 @@
 ## Makefile generated for component 'yukti_arduino_comms'. 
 ## 
 ## Makefile     : yukti_arduino_comms.mk
-## Generated on : Wed Nov 05 12:25:04 2025
+## Generated on : Sun Nov 30 16:14:15 2025
 ## Final product: $(RELATIVE_PATH_TO_ANCHOR)/yukti_arduino_comms.elf
 ## Product type : executable
 ## 
@@ -28,7 +28,7 @@ CLASSIC_INTERFACE         = 0
 TGT_FCN_LIB               = None
 MODEL_HAS_DYNAMICALLY_LOADED_SFCNS = 0
 RELATIVE_PATH_TO_ANCHOR   = ..
-LINUX_TARGET_CUSTOM_LIBS  = -lmwraspiperipheral -lgpiod
+LINUX_TARGET_CUSTOM_LIBS  = -lmwraspiperipheral -lgpiod -ldl
 CUSTOM_C_FLAGS            = 
 CUSTOM_CPP_FLAGS          = 
 C_STANDARD_OPTS           = 
@@ -160,7 +160,7 @@ BUILD_TYPE = "Top-Level Standalone Executable"
 ## INCLUDE PATHS
 ###########################################################################
 
-INCLUDES_BUILDINFO = -I$(START_DIR) -I$(MATLAB_ROOT)/toolbox/target/shared/svd/common/include -I$(MATLAB_WORKSPACE)/C/ProgramData/MATLAB/SupportPackages/R2025b/toolbox/realtime/targets/raspi/unifiedserver -I$(START_DIR)/yukti_arduino_comms_ert_rtw -I$(MATLAB_ROOT)/extern/include -I$(MATLAB_ROOT)/simulink/include -I$(MATLAB_ROOT)/rtw/c/src -I$(MATLAB_ROOT)/rtw/c/src/ext_mode/common -I$(MATLAB_ROOT)/rtw/c/ert -I$(MATLAB_WORKSPACE)/C/ProgramData/MATLAB/SupportPackages/R2025b/toolbox/realtime/targets/raspi/include -I$(MATLAB_ROOT)/toolbox/coder/rtiostream/src/utils -I$(MATLAB_ROOT)/toolbox/target/codertarget/rtos/inc
+INCLUDES_BUILDINFO = -I$(START_DIR) -I$(MATLAB_ROOT)/toolbox/target/shared/svd/common/include -I$(MATLAB_WORKSPACE)/C/ProgramData/MATLAB/SupportPackages/R2025b/toolbox/realtime/targets/raspi/unifiedserver -I$(MATLAB_ROOT)/toolbox/shared/spc/src_ml/extern/include -I$(START_DIR)/yukti_arduino_comms_ert_rtw -I$(MATLAB_ROOT)/extern/include -I$(MATLAB_ROOT)/simulink/include -I$(MATLAB_ROOT)/rtw/c/src -I$(MATLAB_ROOT)/rtw/c/src/ext_mode/common -I$(MATLAB_ROOT)/rtw/c/ert -I$(MATLAB_WORKSPACE)/C/ProgramData/MATLAB/SupportPackages/R2025b/toolbox/realtime/targets/raspi/include -I$(MATLAB_ROOT)/toolbox/coder/rtiostream/src/utils -I$(MATLAB_ROOT)/toolbox/target/codertarget/rtos/inc
 
 INCLUDES = $(INCLUDES_BUILDINFO)
 
@@ -181,7 +181,7 @@ DEFINES = $(DEFINES_) $(DEFINES_BUILD_ARGS) $(DEFINES_CUSTOM) $(DEFINES_OPTS) $(
 ## SOURCE FILES
 ###########################################################################
 
-SRCS = $(START_DIR)/yukti_arduino_comms_ert_rtw/yukti_arduino_comms.c $(MATLAB_WORKSPACE)/C/ProgramData/MATLAB/SupportPackages/R2025b/toolbox/realtime/targets/raspi/src/MW_raspi_init.c $(MATLAB_WORKSPACE)/C/ProgramData/MATLAB/SupportPackages/R2025b/toolbox/realtime/targets/raspi/src/periphs/MW_Pyserver_control.c $(MATLAB_WORKSPACE)/C/ProgramData/MATLAB/SupportPackages/R2025b/toolbox/realtime/targets/raspi/src/linuxtimelogger/linuxTimeLogger.c $(MATLAB_ROOT)/toolbox/target/codertarget/rtos/src/linuxinitialize.c
+SRCS = $(MATLAB_ROOT)/toolbox/shared/spc/src_ml/extern/src/DAHostLib_Network.c $(MATLAB_ROOT)/toolbox/shared/spc/src_ml/extern/src/DAHostLib_rtw.c $(START_DIR)/yukti_arduino_comms_ert_rtw/rtGetInf.c $(START_DIR)/yukti_arduino_comms_ert_rtw/rtGetNaN.c $(START_DIR)/yukti_arduino_comms_ert_rtw/rt_nonfinite.c $(START_DIR)/yukti_arduino_comms_ert_rtw/yukti_arduino_comms.c $(START_DIR)/yukti_arduino_comms_ert_rtw/yukti_arduino_comms_data.c $(START_DIR)/get_unix_time_wrapper.c $(START_DIR)/load_camera_bin.c $(MATLAB_WORKSPACE)/C/ProgramData/MATLAB/SupportPackages/R2025b/toolbox/realtime/targets/raspi/src/MW_raspi_init.c $(MATLAB_WORKSPACE)/C/ProgramData/MATLAB/SupportPackages/R2025b/toolbox/realtime/targets/raspi/src/periphs/MW_Pyserver_control.c $(MATLAB_WORKSPACE)/C/ProgramData/MATLAB/SupportPackages/R2025b/toolbox/realtime/targets/raspi/src/linuxtimelogger/linuxTimeLogger.c $(MATLAB_ROOT)/toolbox/target/codertarget/rtos/src/linuxinitialize.c $(MATLAB_WORKSPACE)/C/ProgramData/MATLAB/SupportPackages/R2025b/toolbox/realtime/targets/raspi/src/udp/linuxUDP.c
 
 MAIN_SRC = $(START_DIR)/yukti_arduino_comms_ert_rtw/ert_main.c
 
@@ -191,7 +191,7 @@ ALL_SRCS = $(SRCS) $(MAIN_SRC)
 ## OBJECTS
 ###########################################################################
 
-OBJS = yukti_arduino_comms.c.o MW_raspi_init.c.o MW_Pyserver_control.c.o linuxTimeLogger.c.o linuxinitialize.c.o
+OBJS = DAHostLib_Network.c.o DAHostLib_rtw.c.o rtGetInf.c.o rtGetNaN.c.o rt_nonfinite.c.o yukti_arduino_comms.c.o yukti_arduino_comms_data.c.o get_unix_time_wrapper.c.o load_camera_bin.c.o MW_raspi_init.c.o MW_Pyserver_control.c.o linuxTimeLogger.c.o linuxinitialize.c.o linuxUDP.c.o
 
 MAIN_OBJ = ert_main.c.o
 
@@ -374,6 +374,18 @@ $(PRODUCT) : $(OBJS) $(PREBUILT_OBJS) $(LIBS) $(MAIN_OBJ)
 	$(CPP) $(CPPFLAGS) -o "$@" "$<"
 
 
+%.c.o : $(MATLAB_ROOT)/toolbox/shared/spc/src_ml/extern/src/%.c
+	$(CC) $(CFLAGS) -o "$@" "$<"
+
+
+%.s.o : $(MATLAB_ROOT)/toolbox/shared/spc/src_ml/extern/src/%.s
+	$(AS) $(ASFLAGS) -o "$@" "$<"
+
+
+%.cpp.o : $(MATLAB_ROOT)/toolbox/shared/spc/src_ml/extern/src/%.cpp
+	$(CPP) $(CPPFLAGS) -o "$@" "$<"
+
+
 %.c.o : $(START_DIR)/yukti_arduino_comms_ert_rtw/%.c
 	$(CC) $(CFLAGS) -o "$@" "$<"
 
@@ -422,11 +434,43 @@ $(PRODUCT) : $(OBJS) $(PREBUILT_OBJS) $(LIBS) $(MAIN_OBJ)
 	$(CPP) $(CPPFLAGS) -o "$@" "$<"
 
 
+DAHostLib_Network.c.o : $(MATLAB_ROOT)/toolbox/shared/spc/src_ml/extern/src/DAHostLib_Network.c
+	$(CC) $(CFLAGS) -o "$@" "$<"
+
+
+DAHostLib_rtw.c.o : $(MATLAB_ROOT)/toolbox/shared/spc/src_ml/extern/src/DAHostLib_rtw.c
+	$(CC) $(CFLAGS) -o "$@" "$<"
+
+
 ert_main.c.o : $(START_DIR)/yukti_arduino_comms_ert_rtw/ert_main.c
 	$(CC) $(CFLAGS) -o "$@" "$<"
 
 
+rtGetInf.c.o : $(START_DIR)/yukti_arduino_comms_ert_rtw/rtGetInf.c
+	$(CC) $(CFLAGS) -o "$@" "$<"
+
+
+rtGetNaN.c.o : $(START_DIR)/yukti_arduino_comms_ert_rtw/rtGetNaN.c
+	$(CC) $(CFLAGS) -o "$@" "$<"
+
+
+rt_nonfinite.c.o : $(START_DIR)/yukti_arduino_comms_ert_rtw/rt_nonfinite.c
+	$(CC) $(CFLAGS) -o "$@" "$<"
+
+
 yukti_arduino_comms.c.o : $(START_DIR)/yukti_arduino_comms_ert_rtw/yukti_arduino_comms.c
+	$(CC) $(CFLAGS) -o "$@" "$<"
+
+
+yukti_arduino_comms_data.c.o : $(START_DIR)/yukti_arduino_comms_ert_rtw/yukti_arduino_comms_data.c
+	$(CC) $(CFLAGS) -o "$@" "$<"
+
+
+get_unix_time_wrapper.c.o : $(START_DIR)/get_unix_time_wrapper.c
+	$(CC) $(CFLAGS) -o "$@" "$<"
+
+
+load_camera_bin.c.o : $(START_DIR)/load_camera_bin.c
 	$(CC) $(CFLAGS) -o "$@" "$<"
 
 
@@ -443,6 +487,10 @@ linuxTimeLogger.c.o : $(MATLAB_WORKSPACE)/C/ProgramData/MATLAB/SupportPackages/R
 
 
 linuxinitialize.c.o : $(MATLAB_ROOT)/toolbox/target/codertarget/rtos/src/linuxinitialize.c
+	$(CC) $(CFLAGS) -o "$@" "$<"
+
+
+linuxUDP.c.o : $(MATLAB_WORKSPACE)/C/ProgramData/MATLAB/SupportPackages/R2025b/toolbox/realtime/targets/raspi/src/udp/linuxUDP.c
 	$(CC) $(CFLAGS) -o "$@" "$<"
 
 

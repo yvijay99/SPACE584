@@ -1,3 +1,4 @@
+#include "load_camera_bin.h"
 #include <stdio.h>
 
 void load_camera_bin(const char *path_st, const char *path_ss,

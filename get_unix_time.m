@@ -5,7 +5,7 @@ function t_unix = get_unix_time()
 
     t_unix = 0;
     
-    coder.cinclude('get_unix_time_wrapper.c');
+    coder.cinclude('get_unix_time_wrapper.h');
     coder.ceval('get_unix_time_wrapper', coder.wref(t_unix));
 
 end

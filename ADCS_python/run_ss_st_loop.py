@@ -49,15 +49,17 @@ def main():
             
             
             # RUN ANALYSIS
-            log = subprocess.run(
-                [sys.executable, str(root+"sun_sensor.py"), root],
-                capture_output=True,
-                text=True,
-                check=True)
+            try:
+                log = subprocess.run(
+                    [sys.executable, str(root+"sun_sensor.py"), root],
+                    capture_output=True,
+                    text=True,
+                    check=True)
+                if printLog:
+                    print(log)
+            except subprocess.CalledProcessError as e:
+                print("Sun sensor analysis failed:", e)
             
-            if printLog:
-                print(log)
-                
             ss_last_run = time.time()
             ss_run_time = ss_last_run-ss_start_time
             
@@ -79,32 +81,44 @@ def main():
             
             shutter_time = 0.1 # [s]
             shutter_str = str(int(shutter_time * 1000000))
-            cmd = 'rpicam-still -o '+root+'star_field.jpg --shutter '+shutter_str+' --gain 1 --awbgains 1,1 --immediate --camera 1 --rotation 180'
-            log = os.system(cmd)
+            cmd = [
+                "rpicam-still",
+                "-o", root+"star_field.jpg",
+                "--shutter", shutter_str,
+                "--gain", "1",
+                "--awbgains", "1,1",
+                "--immediate",
+                "--camera", "0",
+                "--rotation", "180"
+            ]
             
+            cam = subprocess.run(cmd, capture_output=True, text=True, check=False)
             if printLog:
-                print(log)
-            
+                print(cam)
             
             # CROP IMAGE
-            log = subprocess.run(
-                [sys.executable, "crop_image.py", str(root+"star_field.jpg")],
-                capture_output=True,
-                text=True,
-                check=True)
+            try:
+                log = subprocess.run(
+                    [sys.executable, "crop_image.py", str(root+"star_field.jpg")],
+                    capture_output=True,
+                    text=True,
+                    check=True)
+                if printLog:
+                    print(log)
+            except subprocess.CalledProcessError as e:
+                print("Image crop failed:", e)
             
-            if printLog:
-                print(log)
-                
             # RUN ANALYSIS
-            log = subprocess.run(
-                [sys.executable, "star_tracker.py", root],
-                capture_output=True,
-                text=True,
-                check=True)
-            
-            if printLog:
-                print(log)
+            try:
+                log = subprocess.run(
+                    [sys.executable, "star_tracker.py", root],
+                    capture_output=True,
+                    text=True,
+                    check=True)
+                if printLog:
+                    print(log)
+            except subprocess.CalledProcessError as e:
+                print("Star tracker failed:", e)
             
                 
             st_last_run = time.time()
@@ -130,6 +144,7 @@ if __name__ == "__main__":
     root = "./"
     
     main()
+
     
     
     

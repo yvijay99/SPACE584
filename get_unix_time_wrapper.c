@@ -1,4 +1,6 @@
+#include "get_unix_time_wrapper.h"
 #include <sys/time.h>
+#include <stddef.h>
 
 void get_unix_time_wrapper(double *t_unix)
 {

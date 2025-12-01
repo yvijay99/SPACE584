@@ -11,10 +11,10 @@ function [phi_st, t_st, valid_st, phi_ss, t_ss, valid_ss] = load_camera_bin()
     valid_ss_int = int32(0);
     
     % File paths (null-terminated strings for C)
-    path_st = ['/home/space584a/MATLAB_ws/R2025b/ADCS_python/phi_st.bin', char(0)];
-    path_ss = ['/home/space584a/MATLAB_ws/R2025b/ADCS_python/phi_ss.bin', char(0)];
+    path_st = ['/ADCS_python/phi_st.bin', char(0)];
+    path_ss = ['/ADCS_python/phi_ss.bin', char(0)];
     
-    coder.cinclude('load_camera_bin.c');
+    coder.cinclude('load_camera_bin.h');
     coder.ceval('load_camera_bin', ...
         coder.rref(path_st(1)), coder.rref(path_ss(1)), ...
         coder.wref(phi_st), coder.wref(t_st), coder.wref(valid_st_int), ...
