@@ -14,6 +14,8 @@ For local *run in current directory):
 For rpi deployment:
 >> python3 /home/space584a/MATLAB_ws/R2025b/ADCS_python/star_tracker.py /home/space584a/MATLAB_ws/R2025b/ADCS_python/
 
+This version: adds headless matplotlib backend (Agg) and robust exception handling so the calling loop doesn't crash.
+
 """
 
 import numpy as np
@@ -21,9 +23,13 @@ import sys
 import os
 import time
 from skimage.measure import label, regionprops
+import matplotlib
+matplotlib.use('Agg')
 import matplotlib.pyplot as plt
 from scipy.io import savemat
 from datetime import datetime
+import struct
+import traceback
 
 def main():
     
@@ -44,6 +50,10 @@ def main():
     '''
     
     print('################## RUNNING STAR TRACKER ANALYSIS ##################')
+    
+    if len(sys.argv) < 2:
+        write_phi_nan("./")
+        return np.array([np.nan])
     
     input_directory = sys.argv[1]
     
@@ -127,10 +137,14 @@ def main():
 
     data_dict = {"phi_st": phi_st,"t": time.time()} # Save Unix Epoch Time (seconds since 1970)
 
-    output_file = "phi_st.mat"
-    savemat(str(input_directory+output_file), data_dict)
+    output_file_st = "phi_st.bin"
     
-    print("Attitude is determined to be: phi_st =", round(phi_st.item(),5),", and is saved to:", output_file)
+    t_st = data_dict["t"]
+    
+    with open(input_directory + output_file_st, "wb") as f:
+        f.write(struct.pack("dd", phi_st.item(), t_st))
+
+    print("Attitude is determined to be: phi_st =", round(phi_st.item(),5),", and is saved to:", output_file_st)
     
     
     return phi_st
@@ -496,7 +510,18 @@ def match_to_lookup(star_ls, star_pos_error, star_lookup, ax):
     
     return star_num, deltaphi, deltatheta, ax
 
+def write_phi_nan(input_directory):
+    """Write phi_st.bin with NaN and timestamp so callers have a file to read."""
+    output_file_st = "phi_st.bin"
+    phi_st_nan = np.array([np.nan], dtype=np.float64)
+    t_st = time.time()
+    with open(os.path.join(input_directory, output_file_st), "wb") as f:
+        f.write(struct.pack("dd", phi_st_nan.item(), t_st))
+    print("Wrote NaN phi_st to", os.path.join(input_directory, output_file_st))
+
 if __name__ == "__main__":
+    
+    # Parameters
     
     FOV = np.pi/6
     img_wFOV = np.deg2rad(102) # Total field of view width of starfield reference image [rad]
@@ -506,3 +531,17 @@ if __name__ == "__main__":
     savePlot = True
     
     main()
+    
+    try:
+        phi = main()
+    except Exception as e:
+        print("Exception caught in star_tracker.py:")
+        traceback.print_exc()
+        # Ensure a phi_st.bin still exists for downstream code to read
+        try:
+            input_directory = sys.argv[1] if len(sys.argv) > 1 else "./"
+        except Exception:
+            input_directory = "./"
+        write_phi_nan(input_directory)
+        # Exit cleanly so the parent loop doesn't get a non-zero return code
+        sys.exit(0)
