@@ -121,6 +121,7 @@ def main():
     t_ss_ls = []
     phi_st_ls = []
     phi_ss_ls = []
+    delta_omega_RW_ls = []
     
     while monitor:
         
@@ -137,6 +138,9 @@ def main():
         scp_get_file_with_password(HOST, USER, PASS, ROOT+"ADCS_python/phi_st.mat", LOCAL_DEST)
         scp_get_file_with_password(HOST, USER, PASS, ROOT+"ADCS_python/phi_ss.mat", LOCAL_DEST)
         
+        # Get state controller output
+        scp_get_file_with_password(HOST, USER, PASS, ROOT+"ADCS_python/RW_throttle.npy", LOCAL_DEST)
+        
         # Load images
         st_analysis_img = Image.open("star_tracker_analysis.jpg")
         ss_analysis_img = Image.open("sun_sensor_analysis.jpg")
@@ -144,6 +148,8 @@ def main():
         # Load .mat files
         st_data = scipy.io.loadmat('phi_st.mat')
         ss_data = scipy.io.loadmat('phi_ss.mat')
+        #controller_out = scipy.io.loadmat('controller_out.mat')
+        delta_omega = np.load("RW_throttle.npy")
     
         # Append to list, if the data is new:
         if len(t_st_ls) == 0 or t_st_ls[-1] != st_data['t'].item():
@@ -154,6 +160,9 @@ def main():
             t_ss_ls.append(ss_data['t'].item())
             phi_ss_ls.append(ss_data['phi_ss'].item())
             
+        if len(delta_omega_RW_ls) == 0 or delta_omega_RW_ls[-1] != delta_omega:
+            delta_omega_RW_ls.append(delta_omega)
+            
         time.sleep(wait_time/2)
         
         # Set up plot
@@ -163,15 +172,22 @@ def main():
         axs = fig.subplot_mosaic([['Top', 'Top'],['BottomLeft', 'BottomRight']],
                           gridspec_kw={'width_ratios':[1, 1], 'height_ratios':[2,3]})
         
+        RW_axs = axs['Top'].twinx()
+        
         # Get the earliest time saved by either sensor, to set the epoch time of the rpi
         rpi_epoch_t0 = np.min([t_st_ls[0],t_ss_ls[0]])
         
+        # Create fake time data for RW output, which has no time stamp
+        RW_time = np.linspace(0,np.max([t_st_ls[-1],t_ss_ls[-1]]), len(delta_omega_RW_ls)) - rpi_epoch_t0
+        
         # Show timeseries
-        axs['Top'].plot(np.array(t_st_ls)-rpi_epoch_t0,np.array(phi_st_ls)*(180/np.pi),label='s.t.',marker = "x")
-        axs['Top'].plot(np.array(t_ss_ls)-rpi_epoch_t0,np.array(phi_ss_ls)*(180/np.pi),label='s.s.',marker = "x")
+        axs['Top'].plot(np.array(t_st_ls)-rpi_epoch_t0, np.array(phi_st_ls)*(180/np.pi),label='s.t.',marker = "x")
+        axs['Top'].plot(np.array(t_ss_ls)-rpi_epoch_t0, np.array(phi_ss_ls)*(180/np.pi),label='s.s.',marker = "x")
+        RW_axs.plot(RW_time,np.array(delta_omega_RW_ls)*(180/np.pi),label=r'RW $\delta \omega$',marker = "x", color = 'black')
         axs['Top'].legend()
         axs['Top'].set_xlabel("rpi. epoch time [s]")
         axs['Top'].set_ylabel(r"$\phi$ [deg.]")
+        RW_axs.set_ylabel(r"Commanded acceleration [deg/s$^2$]")
         axs['Top'].set_title("Attitude timeseries")
         
         # Show analysis figures
