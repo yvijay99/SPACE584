@@ -1,8 +1,8 @@
-# CubeSat Attitude Determination and Control System (ADCS)
+# CubeSat Attitude Determination and Control System 
 
 **SPACE584 - Spacecraft Engineering Project**
 
-A complete attitude determination and control system for a CubeSat, integrating dual IMU sensors, reaction wheels, magnetorquers, star tracker, and sun sensor algorithms. The system uses an Arduino for sensor data collection and a Raspberry Pi running Simulink-generated Extended Kalman Filter algorithms for real-time attitude estimation and control.
+An integrated attitude determination and control system for our CubeSat, integrating dual IMU sensors, reaction wheels, magnetorquers, star tracker, and sun sensor algorithms. The system uses an Arduino for sensor data collection and a Raspberry Pi running Simulink-generated Extended Kalman Filter algorithms for real-time attitude estimation and control.
 
 ---
 
