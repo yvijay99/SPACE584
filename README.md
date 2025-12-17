@@ -12,7 +12,7 @@ An integrated attitude determination and control system for our CubeSat, integra
 ├── ADCS_python/                    # Python scripts for Raspberry Pi
 ├── resources/project/              # Project resources and documentation
 ├── yukti_arduino_comms_ert_rtw/    # Simulink-generated C code for embedded deployment
-├── arduinoICM20948.ino             # Arduino firmware for dual ICM-20948 IMU data collection
+├── arduinoICM20948.ino             # Arduino sketch for dual ICM-20948 IMU data collection
 ├── magcalibration.ino              # Arduino sketch for magnetometer calibration
 ├── yukti_arduino_comms.slx         # Main Simulink model (EKF, control logic, state machine)
 ├── yukti_arduino_comms.elf         # Compiled executable for Raspberry Pi
